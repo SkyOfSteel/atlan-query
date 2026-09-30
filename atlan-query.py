@@ -7,12 +7,12 @@ load_dotenv()
 ATLAN_BASE_URL = os.getenv("ATLAN_BASE_URL")
 ATLAN_API_KEY = os.getenv("ATLAN_API_KEY")
 
-CONNECTION_QN = os.getenv("CONNECTION_QN")
-DATABASE_QN = os.getenv("DATABASE_QN")
-CONNECTION_LABEL = os.getenv("CONNECTION_LABEL")
+CONNECTION_QN = "default/redshift/1712865454"
+DATABASE_QN = "default/redshift/1712865454/nfl-dna-gridiron-prd"
+CONNECTION_LABEL = "nfl-redshift-gridiron-datapump-prd"
 
-DEC_KEY = os.getenv("DEC_KEY")
-ASSET_TYPES = os.getenv("ASSET_TYPES")
+DEC_KEY = "WCBh7f0JK8naMz3FBMWFly"
+ASSET_TYPES = ['Table', 'View', 'Column']
 
 def hierarchy_row(schema_qns):
     """Build the connection/database/schema row from a list of schema qualified names."""
@@ -34,6 +34,34 @@ def hierarchy_row(schema_qns):
              "isLocked": False,
              "isMuted": False,
              "label": CONNECTION_LABEL}
+
+def name_row(code):
+    """Build the 'Qualified name contains <code>_' row."""
+
+    return {'key': 'qualifiedName', 
+            'operator': 'contains', 
+            'value': [code.lower() + "_"], 
+            'isLocked': False, 
+            'isMuted': False, 
+            'label': 'Qualified name'}
+
+def type_row():
+    """Build the 'Asset type is Table, View or Column' row."""
+    return {'key': '__typeName.keyword', 
+            'operator': 'eq', 
+            'value': ASSET_TYPES, 
+            'isLocked': False, 
+            'isMuted': False, 
+            'label': 'Asset type'}
+
+def dec_row(code):
+    """Build the 'Related DEC is <CODE>' row."""
+    return {'key': DEC_KEY, 
+            'operator': 'eqAnd', 
+            'value': [code.upper()], 
+            'isLocked': False, 
+            'isMuted': False, 
+            'label': 'Related DEC'}
 
 client = AtlanClient()
 
@@ -67,3 +95,16 @@ print(json.dumps(target_all, indent=2))
 
 print(hierarchy_row([DATABASE_QN + "/raw_reference_population"]) == acx_filter["rules"][0]["rules"][0])
 print(hierarchy_row([]) == acx_filter["rules"][1]["rules"][0])
+
+dyc_filter = json.loads(dyc.data_product_assets_playbook_filter)
+
+print("^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+
+print(name_row("ACX") == acx_filter["rules"][0]["rules"][1])
+print(type_row() == acx_filter["rules"][0]["rules"][2])
+print(dec_row("acx") == acx_filter["rules"][1]["rules"][1])
+print(name_row("DYC") == dyc_filter["rules"][0]["rules"][1])
+print(dec_row("dyc") == dyc_filter["rules"][1]["rules"][1])
+
+print(acx_filter["rules"][0]["rules"][2])
+print(type_row())
