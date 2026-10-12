@@ -63,6 +63,11 @@ def dec_row(code):
             'isMuted': False, 
             'label': 'Related DEC'}
 
+def group(condition, rules):
+    """Wrap rows (or blocks) in a Match all ("AND") or Match any ("OR") group."""
+    return ...
+
+
 client = AtlanClient()
 
 client.user.get_current()
